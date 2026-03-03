@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>교회 성경읽기 플래너</title>
+
+<style>
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+  background:#f4efe6;
+  padding:15px;
+}
+h1{
+  text-align:center;
+  font-size:20px;
+}
+.card{
+  background:white;
+  padding:15px;
+  border-radius:12px;
+  margin-bottom:15px;
+  box-shadow:0 3px 8px rgba(0,0,0,0.08);
+}
+label{
+  font-size:14px;
+}
+select,input{
+  width:100%;
+  padding:8px;
+  border-radius:8px;
+  border:1px solid #ccc;
+  margin-bottom:10px;
+}
+button{
+  width:100%;
+  padding:10px;
+  border:none;
+  border-radius:8px;
+  background:#6b8e23;
+  color:white;
+  font-weight:bold;
+  margin-top:5px;
+}
+.today{
+  font-size:18px;
+  font-weight:bold;
+  text-align:center;
+  margin-bottom:10px;
+}
+.stats{
+  font-size:14px;
+  line-height:1.6;
+}
+.progress-bar{
+  height:20px;
+  background:#ddd;
+  border-radius:10px;
+  overflow:hidden;
+  margin-top:10px;
+}
+.progress-fill{
+  height:100%;
+  background:#3a7d44;
+  width:0%;
+}
+.calendar{
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  gap:5px;
+  margin-top:10px;
+}
+.day{
+  padding:8px 0;
+  text-align:center;
+  border-radius:8px;
+  background:#eee;
+  font-size:12px;
+}
+.day.checked{
+  background:#3a7d44;
+  color:white;
+}
+</style>
+</head>
+
+<body>
+
+<h1>📖 교회 성경읽기 플래너</h1>
+
+<div class="card">
+<label>시작 날짜</label>
+<input type="date" id="startDate">
+
+<label>기간 선택</label>
+<select id="planDays">
+<option value="365">1년</option>
+<option value="730">2년</option>
+<option value="1095">3년</option>
+</select>
+
+<label>목표 독수</label>
+<select id="targetReads">
+<option value="1">1독</option>
+<option value="2">2독</option>
+<option value="3">3독</option>
+<option value="4">4독</option>
+<option value="5">5독</option>
+</select>
+
+<button onclick="saveSettings()">저장 / 변경 적용</button>
+</div>
+
+<div class="card">
+<div class="today" id="todayReading"></div>
+<div class="stats" id="stats"></div>
+
+<div class="progress-bar">
+  <div class="progress-fill" id="progressFill"></div>
+</div>
+</div>
+
+<div class="card">
+<div style="font-weight:bold;">📅 이번 달 체크표</div>
+<div class="calendar" id="calendar"></div>
+</div>
+
+<script>
+const TOTAL_CHAPTERS = 1189;
+
+let data = JSON.parse(localStorage.getItem("bibleData")) || {
+  startDate:null,
+  planDays:365,
+  targetReads:1,
+  readChapters:0,
+  checkedDays:{}
+};
+
+function saveSettings(){
+  data.startDate=document.getElementById("startDate").value;
+  data.planDays=parseInt(document.getElementById("planDays").value);
+  data.targetReads=parseInt(document.getElementById("targetReads").value);
+  saveData();
+  updateAll();
+}
+
+function updateAll(){
+  calculate();
+  renderCalendar();
+}
+
+function calculate(){
+  if(!data.startDate){
+    document.getElementById("todayReading").innerText="시작일을 선택하세요";
+    return;
+  }
+
+  const start=new Date(data.startDate);
+  const end=new Date(start);
+  end.setDate(start.getDate()+data.planDays);
+
+  const today=new Date();
+  const totalGoal=TOTAL_CHAPTERS*data.targetReads;
+
+  const remainingChapters=totalGoal-data.readChapters;
+  const remainingDays=Math.max(1,Math.ceil((end-today)/(1000*60*60*24)));
+  const dailyAmount=Math.ceil(remainingChapters/remainingDays);
+
+  document.getElementById("todayReading").innerText="오늘 읽기: "+dailyAmount+"장";
+
+  document.getElementById("stats").innerHTML=
+    "📌 읽은 장수: "+data.readChapters+"장<br>"+
+    "📖 목표 장수: "+totalGoal+"장<br>"+
+    "⏳ 남은 장수: "+remainingChapters+"장<br>"+
+    "📅 남은 일수: "+remainingDays+"일";
+
+  const percent=Math.min(100,(data.readChapters/totalGoal)*100);
+  document.getElementById("progressFill").style.width=percent+"%";
+}
+
+function renderCalendar(){
+  const cal=document.getElementById("calendar");
+  cal.innerHTML="";
+
+  const now=new Date();
+  const year=now.getFullYear();
+  const month=now.getMonth();
+  const lastDay=new Date(year,month+1,0).getDate();
+
+  for(let i=1;i<=lastDay;i++){
+    const dateStr=new Date(year,month,i).toISOString().split("T")[0];
+    const div=document.createElement("div");
+    div.className="day";
+    div.innerText=i;
+
+    if(data.checkedDays[dateStr]){
+      div.classList.add("checked");
+    }
+
+    div.onclick=function(){
+      toggleDate(dateStr);
+    };
+
+    cal.appendChild(div);
+  }
+}
+
+function toggleDate(dateStr){
+  const totalGoal=TOTAL_CHAPTERS*data.targetReads;
+  const start=new Date(data.startDate);
+  const end=new Date(start);
+  end.setDate(start.getDate()+data.planDays);
+  const today=new Date();
+  const remainingChapters=totalGoal-data.readChapters;
+  const remainingDays=Math.max(1,Math.ceil((end-today)/(1000*60*60*24)));
+  const dailyAmount=Math.ceil(remainingChapters/remainingDays);
+
+  if(data.checkedDays[dateStr]){
+    delete data.checkedDays[dateStr];
+    data.readChapters-=dailyAmount;
+  }else{
+    data.checkedDays[dateStr]=true;
+    data.readChapters+=dailyAmount;
+  }
+
+  saveData();
+  updateAll();
+}
+
+function saveData(){
+  localStorage.setItem("bibleData",JSON.stringify(data));
+}
+
+window.onload=function(){
+  if(data.startDate)
+    document.getElementById("startDate").value=data.startDate;
+  document.getElementById("planDays").value=data.planDays;
+  document.getElementById("targetReads").value=data.targetReads;
+  updateAll();
+}
+</script>
+
+</body>
+</html>

@@ -1,1 +1,0 @@
-# Church-bible-reading-check

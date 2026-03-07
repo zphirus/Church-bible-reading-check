@@ -256,10 +256,11 @@ d.innerText=i;
 if(data.checkedDays[key])d.classList.add("checked");
 
 d.onclick=function(){
+d.onclick=function(){
 
 if(data.checkedDays[key]){
 delete data.checkedDays[key];
-data.readIndex=Math.max(0,data.readIndex+daily);
+data.readIndex=Math.max(0,data.readIndex-daily);
 }else{
 data.checkedDays[key]=true;
 data.readIndex+=daily;

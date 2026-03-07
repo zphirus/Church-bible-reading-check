@@ -208,20 +208,26 @@ const remainingDays=Math.max(1,Math.ceil((end-today)/86400000));
 
 const daily=Math.ceil(remainingChapters/remainingDays);
 
+// 오늘 읽을 장 수 표시
 document.getElementById("todayReading").innerText=
 "오늘 읽기 "+daily+"장";
 
+// 성경 위치 계산 (독수 반복 가능)
 const startIndex=data.readIndex % chapters.length;
-const endIndex=(data.readIndex + daily - 1) % chapters.length;
+const endIndex=(data.readIndex+daily-1) % chapters.length;
 
-document.getElementById("readingRange").innerText =
-chapters[startIndex] + " ~ " + chapters[endIndex];const percent=(data.readIndex/totalGoal)*100;
+document.getElementById("readingRange").innerText=
+chapters[startIndex]+" ~ "+chapters[endIndex];
 
+// 진행률
+const percent=(data.readIndex/totalGoal)*100;
 document.getElementById("progressFill").style.width=percent+"%";
 
+// 통계
 document.getElementById("stats").innerHTML=
 "읽은 장 "+data.readIndex+
-"<br>남은 장 "+remainingChapters;
+"<br>남은 장 "+remainingChapters+
+"<br>남은 일 "+remainingDays;
 
 renderCalendar(daily);
 

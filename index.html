@@ -211,14 +211,12 @@ const daily=Math.ceil(remainingChapters/remainingDays);
 document.getElementById("todayReading").innerText=
 "오늘 읽기 "+daily+"장";
 
-const startIndex=data.readIndex;
+const startIndex=data.readIndex % chapters.length;
+const endIndex=(data.readIndex + daily - 1) % chapters.length;
 
-const endIndex=Math.min(startIndex+daily-1,chapters.length-1);
+document.getElementById("readingRange").innerText =
+chapters[startIndex] + " ~ " + chapters[endIndex];const percent=(data.readIndex/totalGoal)*100;
 
-document.getElementById("readingRange").innerText=
-chapters[startIndex]+" ~ "+chapters[endIndex];
-
-const percent=(data.readIndex/totalGoal)*100;
 document.getElementById("progressFill").style.width=percent+"%";
 
 document.getElementById("stats").innerHTML=
@@ -255,7 +253,7 @@ d.onclick=function(){
 
 if(data.checkedDays[key]){
 delete data.checkedDays[key];
-data.readIndex-=daily;
+data.readIndex=Math.max(0,data.readIndex+daily);
 }else{
 data.checkedDays[key]=true;
 data.readIndex+=daily;
